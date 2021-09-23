@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+first_argument="$1"
+second_argument="$2"
+IFS=$'\n'
+#------if statements and case statements---------
+function basicFunction(){
+	if ! [ -d "$1" ]; then
+		echo "Not a directory" >&2
+	fi
+	if ! [ -r "$1" ]; then
+		echo "Permissions not given" >&2
+	fi
+        failed_files=$(ls -A "$1" | grep -vE  '^[._a-zA-Z][-._a-zA-Z]{0,13}\/?$' |  sort -u)
+	duplicate_files=$(ls -A "$1" | grep -E '^[._a-zA-Z][-._a-zA-Z]{0,13}\/?$' | sort -f | uniq -iD)
+	for file in $failed_files; do
+		if [ -d "$1/$file" ]; then
+			echo "$1/${file}/"
+		else
+			echo "$1/${file}"
+		fi	
+	done
+ 
+	for file in $duplicate_files; do
+		if [ -d "$1/$file" ]; then
+			echo "$1/${file}/"
+		else
+			echo "$1/${file}"
+		fi
+	done
+}
+
+
+function recursiveFunction(){
+	basicFunction "$1"
+	for file_all in $(ls -A "$1"); do
+		 if [ -d "$1/$file_all" ]; then
+			 recursiveFunction "$1/$file_all"
+		 fi
+	 done
+}
+	
+
+	if [ "$#" -gt 0 ]
+	then
+			if [ "$first_argument" = "-r" ]
+			then
+					if [ "$#" -eq 1 ]
+					then
+						recursiveFunction "."
+					elif [ "$#" -gt 2 ]
+					then
+						echo "Too many arguments" >&2
+					elif [ "$#" -eq 2 ]
+					then
+						if ! [ -d "$2" ]; then
+							echo "Not a directory" >&2
+						fi
+						recursiveFunction "$second_argument"
+					fi
+			else 
+				if [ "$#" -eq 1 ]
+				then
+				        basicFunction "$first_argument"
+				elif [ "$1" = "-" ]
+				then
+					echo "Argument cannot start with '-'" >&2
+				else [ "$#" -gt 2 ]
+					echo "Too  many arguments" >&2
+				fi
+			fi	
+	else
+		 basicFunction "."
+	fi
+
+
+
